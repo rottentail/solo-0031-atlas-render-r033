@@ -120,6 +120,14 @@ func (w *Worker) step(parent context.Context) error {
 	if parent.Err() != nil {
 		return nil
 	}
+	// Durable result bytes must exist before the state can name them. The
+	// blob write is atomic, and the state commit below only succeeds when the
+	// digest is present on disk, so a crash in between leaves an orphan blob
+	// but never a job pointing at a result that does not exist.
+	var digest string
+	if e == nil {
+		digest, e = w.store.Results().Put(data)
+	}
 	return w.store.Update(func(s *model.State) error {
 		v := s.Jobs[j.ID]
 		if v.State != "running" || v.Attempt != j.Attempt {
@@ -137,7 +145,7 @@ func (w *Worker) step(parent context.Context) error {
 			s.Emit("job."+v.State, v.ID)
 			return nil
 		}
-		a := model.Artifact{ID: model.ID("png", s.Sequence+1), JobID: v.ID, State: "live", Digest: model.Digest(data), Width: plan.Width, Height: plan.Height, PNG: data}
+		a := model.Artifact{ID: model.ID("png", s.Sequence+1), JobID: v.ID, State: "live", Digest: digest, Width: plan.Width, Height: plan.Height}
 		s.Artifacts[a.ID] = a
 		v.State = "succeeded"
 		v.ArtifactID = a.ID

@@ -8,7 +8,13 @@ import (
 	"time"
 )
 
-const FormatVersion = 1
+const (
+	// FormatVersion is the current on-disk state format. Version 2 stores
+	// result PNG bytes in the independent result store rather than inline.
+	FormatVersion = 2
+	// LegacyInlineVersion is the last format that embedded result PNG bytes.
+	LegacyInlineVersion = 1
+)
 
 type Point struct {
 	X float64 `json:"x"`
@@ -91,6 +97,10 @@ type Job struct {
 	UpdatedAt  time.Time `json:"updatedAt"`
 	Payload    Snapshot  `json:"payload"`
 }
+
+// Artifact records the facts of a render result. PNG is transient working
+// memory only: persisted bytes live in the content-addressed result store
+// and are looked up by Digest, so the JSON state never carries result bytes.
 type Artifact struct {
 	ID     string `json:"id"`
 	JobID  string `json:"jobId"`
@@ -98,7 +108,7 @@ type Artifact struct {
 	Digest string `json:"digest"`
 	Width  int    `json:"width"`
 	Height int    `json:"height"`
-	PNG    []byte `json:"png,omitempty"`
+	PNG    []byte `json:"-"`
 }
 type Receipt struct {
 	Key         string `json:"key"`

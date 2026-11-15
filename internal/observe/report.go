@@ -58,9 +58,20 @@ func Summary(st model.State) map[string]any {
 	for _, j := range st.Jobs {
 		jobs[j.State]++
 	}
-	bytes := 0
+	live := 0
 	for _, a := range st.Artifacts {
-		bytes += len(a.PNG)
+		if a.State == "live" {
+			live++
+		}
 	}
-	return map[string]any{"sceneCount": len(st.Scenes), "assetCount": len(st.Assets), "snapshotCount": len(st.Snapshots), "jobs": jobs, "artifactBytes": bytes, "sequence": st.Sequence}
+	return map[string]any{"sceneCount": len(st.Scenes), "assetCount": len(st.Assets), "snapshotCount": len(st.Snapshots), "jobs": jobs, "liveArtifactCount": live, "sequence": st.Sequence}
+}
+
+// SummaryWithBytes annotates the summary with the on-disk size of the blobs
+// backing live artifacts. Identical outputs share a blob, so this measures
+// retained result storage rather than the sum of per-result payloads.
+func SummaryWithBytes(st model.State, bytes int64) map[string]any {
+	out := Summary(st)
+	out["artifactBytes"] = bytes
+	return out
 }

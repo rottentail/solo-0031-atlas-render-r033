@@ -21,7 +21,7 @@
 | GET /artifacts/{id} | 可选If-None-Match | PNG，200或304 |
 | DELETE /artifacts/{id} | 无 | state，200 |
 | POST /compare | left, right（结果ID） | 像素比较，200 |
-| GET /status | 无 | 场景/素材/快照/任务计数和结果字节数 |
+| GET /status | 无 | 场景/素材/快照/任务计数、存活结果数和结果存储字节数 |
 | GET /events | 无 | 最多500个有序领域事件 |
 
 `GET /healthz` 不带 `/v1`，返回ready。它表明进程已打开并恢复状态，不包含单独的磁盘可写探测。任务响应省略固定输入的有效载荷，输入细节通过快照接口读取。

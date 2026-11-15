@@ -8,7 +8,7 @@ import (
 )
 
 func Validate(s model.State) error {
-	if s.Version != model.FormatVersion {
+	if s.Version != model.FormatVersion && s.Version != model.LegacyInlineVersion {
 		return fmt.Errorf("unsupported state version %d", s.Version)
 	}
 	if s.Scenes == nil || s.Assets == nil || s.Snapshots == nil || s.Jobs == nil || s.Artifacts == nil || s.Receipts == nil {
@@ -72,8 +72,10 @@ func Validate(s model.State) error {
 		}
 		switch a.State {
 		case "live":
-			if model.Digest(a.PNG) != a.Digest {
-				return fmt.Errorf("artifact digest mismatch")
+			// Result bytes live in the result store; Digest must be a
+			// well-formed content address whose blob Store verifies.
+			if a.Digest == "" {
+				return fmt.Errorf("artifact %s missing digest", id)
 			}
 		case "purged":
 			if len(a.PNG) != 0 {
